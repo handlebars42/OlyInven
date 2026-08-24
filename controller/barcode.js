@@ -1,4 +1,7 @@
- function barcodeStartScanner() {
+let barcodeDetectionTimer = null;
+let barcodeDetectionInProgress = false;
+
+function barcodeStartScanner() {
   Quagga.init({
     inputStream : {
       name : "Live",
@@ -95,6 +98,21 @@ function onBarcode() {
   })
 }
 
+function stopBarcodeCamera() {
+  if (barcodeDetectionTimer) {
+    clearInterval(barcodeDetectionTimer);
+    barcodeDetectionTimer = null;
+  }
+
+  barcodeDetectionInProgress = false;
+
+  const video = document.getElementById("bar");
+  if (video.srcObject) {
+    video.srcObject.getTracks().forEach(track => track.stop());
+    video.srcObject = null;
+  }
+}
+
 function preprocessBarcodeFrame(sourceCanvas) {
   const outputCanvas = document.createElement("canvas");
   outputCanvas.width = sourceCanvas.width;
@@ -162,19 +180,6 @@ function capturarBarcode() {
   canvas.height = cropHeight;
 
   const context = canvas.getContext("2d");
-  context.drawImage(
-    video,
-    cropX,
-    cropY,
-    cropWidth,
-    cropHeight,
-    0,
-    0,
-    cropWidth,
-    cropHeight
-  );
-
-  const processedCanvas = preprocessBarcodeFrame(canvas);
 
   if (!("BarcodeDetector" in window)) {
     alert("Este navegador no soporta BarcodeDetector");
@@ -187,59 +192,95 @@ function capturarBarcode() {
     ]
   });
 
-  detector.detect(processedCanvas)
-    .then(detections => {
-      if (detections.length === 0) {
-        alert("No se pudo leer el codigo");
-        return;
-      }
+  if (barcodeDetectionTimer) {
+    return;
+  }
 
-      const result = detections[0].rawValue;
+  const detectFrame = () => {
+    if (barcodeDetectionInProgress || !video.videoWidth || !video.videoHeight) {
+      return;
+    }
 
-      cancelarBarcode();
+    barcodeDetectionInProgress = true;
 
-      const barcodeInput = document.getElementById("barcode");
-      barcodeInput.value = result;
-      barcodeInput.dispatchEvent(new Event("input"));
-    })
-    .catch(error => {
-      console.error("Error detectando codigo:", error);
-      alert("Ocurrio un error al leer el codigo");
-    });
+    context.drawImage(
+      video,
+      cropX,
+      cropY,
+      cropWidth,
+      cropHeight,
+      0,
+      0,
+      cropWidth,
+      cropHeight
+    );
+
+    const processedFrame = preprocessBarcodeFrame(canvas);
+
+    detector.detect(processedFrame)
+      .then(detections => {
+        const result = detections.find(detection => {
+          const value = detection.rawValue || detection.rawData;
+          return typeof value === "string" && value.trim().length > 0;
+        });
+
+        if (!result) {
+          return;
+        }
+
+        const barcode = result.rawValue || result.rawData;
+        stopBarcodeCamera();
+
+        const barcodeInput = document.getElementById("barcode");
+        barcodeInput.value = barcode;
+        barcodeInput.dispatchEvent(new Event("input"));
+        hide(document.getElementById("page-2"));
+        show(document.getElementById("page-1"));
+      })
+      .catch(error => {
+        console.error("Error detectando codigo:", error);
+      })
+      .finally(() => {
+        barcodeDetectionInProgress = false;
+      });
+  };
+
+  detectFrame();
+  barcodeDetectionTimer = setInterval(detectFrame, 150);
 }
 
-function capturarBarcode() {
-  console.log("Click en capturar barcode")
-  const bar = byId('bar')
-  const canvas = byId('canvas1');
-  const redline = byId("red-line")
-  const input = byId('input');
+// function capturarBarcode() {
+//   console.log("Click en capturar barcode")
+//   const bar = byId('bar')
+//   const canvas = byId('canvas1');
+//   const redline = byId("red-line")
+//   const input = byId('input');
 
-  const quarter = bar.videoWidth / 4
+//   const quarter = bar.videoWidth / 4
   
-  canvas.width = 390;
-  canvas.height = 219;
-  const ctx = canvas.getContext('2d');
+//   canvas.width = 390;
+//   canvas.height = 219;
+//   const ctx = canvas.getContext('2d');
   
-  ctx.drawImage(bar, quarter, (bar.videoHeight/2)-100, quarter *2, 200,
-               0, 0, quarter*2, 200);
+//   ctx.drawImage(bar, quarter, (bar.videoHeight/2)-100, quarter *2, 200,
+//                0, 0, quarter*2, 200);
   
   
     
-  /*canvas.width = bar.videoWidth;
-  canvas.height = bar.videoHeight;
-  const ctx = canvas.getContext('2d');
+//   /*canvas.width = bar.videoWidth;
+//   canvas.height = bar.videoHeight;
+//   const ctx = canvas.getContext('2d');
   
-  ctx.drawImage(bar, 0, 0);*/
+//   ctx.drawImage(bar, 0, 0);*/
   
-  //input.src = canvas.toDataURL();
-  input.src = canvas.toBlob();
-  // Now, the onload event for the img will be fired
-}
+//   //input.src = canvas.toDataURL();
+//   input.src = canvas.toBlob();
+//   // Now, the onload event for the img will be fired
+// }
 
 
 function cancelarBarcode() {
-  bar.srcObject.getTracks().forEach(track => track.stop());
+  stopBarcodeCamera();
     
   hide(document.getElementById("page-2"))
   show(document.getElementById("page-1"))
