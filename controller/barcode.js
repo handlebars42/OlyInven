@@ -182,7 +182,9 @@ function capturarBarcode() {
   }
 
   const detector = new BarcodeDetector({
-    formats: ["ean_13", "code_39", "code_128"]
+    formats: ["ean_13", "code_39", "code_128",
+      "ean_8", "upc_a", "upc_e", "codabar", "itf"
+    ]
   });
 
   detector.detect(processedCanvas)
@@ -206,34 +208,34 @@ function capturarBarcode() {
     });
 }
 
-// function capturarBarcode() {
-//   console.log("Click en capturar barcode")
-//   const bar = byId('bar')
-//   const canvas = byId('canvas1');
-//   const redline = byId("red-line")
-//   const input = byId('input');
+function capturarBarcode() {
+  console.log("Click en capturar barcode")
+  const bar = byId('bar')
+  const canvas = byId('canvas1');
+  const redline = byId("red-line")
+  const input = byId('input');
 
-//   const quarter = bar.videoWidth / 4
+  const quarter = bar.videoWidth / 4
   
-//   canvas.width = 390;
-//   canvas.height = 219;
-//   const ctx = canvas.getContext('2d');
+  canvas.width = 390;
+  canvas.height = 219;
+  const ctx = canvas.getContext('2d');
   
-//   ctx.drawImage(bar, quarter, (bar.videoHeight/2)-100, quarter *2, 200,
-//                0, 0, quarter*2, 200);
+  ctx.drawImage(bar, quarter, (bar.videoHeight/2)-100, quarter *2, 200,
+               0, 0, quarter*2, 200);
   
   
     
-//   /*canvas.width = bar.videoWidth;
-//   canvas.height = bar.videoHeight;
-//   const ctx = canvas.getContext('2d');
+  /*canvas.width = bar.videoWidth;
+  canvas.height = bar.videoHeight;
+  const ctx = canvas.getContext('2d');
   
-//   ctx.drawImage(bar, 0, 0);*/
+  ctx.drawImage(bar, 0, 0);*/
   
-//   //input.src = canvas.toDataURL();
-//   input.src = canvas.toBlob();
-//   // Now, the onload event for the img will be fired
-// }
+  //input.src = canvas.toDataURL();
+  input.src = canvas.toBlob();
+  // Now, the onload event for the img will be fired
+}
 
 
 function cancelarBarcode() {
