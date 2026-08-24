@@ -95,34 +95,146 @@ function onBarcode() {
   })
 }
 
-function capturarBarcode() {
-  console.log("Click en capturar barcode")
-  const bar = byId('bar')
-  const canvas = byId('canvas1');
-  const redline = byId("red-line")
-  const input = byId('input');
+function preprocessBarcodeFrame(sourceCanvas) {
+  const outputCanvas = document.createElement("canvas");
+  outputCanvas.width = sourceCanvas.width;
+  outputCanvas.height = sourceCanvas.height;
 
-  const quarter = bar.videoWidth / 4
+  const sourceContext = sourceCanvas.getContext("2d", {
+    willReadFrequently: true
+  });
+  const outputContext = outputCanvas.getContext("2d", {
+    willReadFrequently: true
+  });
+
+  const image = sourceContext.getImageData(
+    0,
+    0,
+    sourceCanvas.width,
+    sourceCanvas.height
+  );
+
+  const pixels = image.data;
+  const contrast = 1.35;
+  const contrastOffset = 128 * (1 - contrast);
+
+  // Grayscale and contrast enhancement
+  for (let index = 0; index < pixels.length; index += 4) {
+    const gray =
+      pixels[index] * 0.299 +
+      pixels[index + 1] * 0.587 +
+      pixels[index + 2] * 0.114;
+
+    const enhanced = Math.max(
+      0,
+      Math.min(255, gray * contrast + contrastOffset)
+    );
+
+    pixels[index] = enhanced;
+    pixels[index + 1] = enhanced;
+    pixels[index + 2] = enhanced;
+  }
+
+  sourceContext.putImageData(image, 0, 0);
+
+  // Mild sharpening
+  outputContext.filter = "contrast(115%)";
+  outputContext.drawImage(sourceCanvas, 0, 0);
+
+  return outputCanvas;
+}
+
+function capturarBarcode() {
+  const video = document.getElementById("bar");
+  const canvas = document.getElementById("canvas1");
+
+  if (!video.videoWidth || !video.videoHeight) {
+    alert("La camara aun no esta lista");
+    return;
+  }
+
+  const cropWidth = Math.floor(video.videoWidth / 2);
+  const cropHeight = Math.min(240, video.videoHeight);
+  const cropX = Math.floor((video.videoWidth - cropWidth) / 2);
+  const cropY = Math.floor((video.videoHeight - cropHeight) / 2);
+
+  canvas.width = cropWidth;
+  canvas.height = cropHeight;
+
+  const context = canvas.getContext("2d");
+  context.drawImage(
+    video,
+    cropX,
+    cropY,
+    cropWidth,
+    cropHeight,
+    0,
+    0,
+    cropWidth,
+    cropHeight
+  );
+
+  const processedCanvas = preprocessBarcodeFrame(canvas);
+
+  if (!("BarcodeDetector" in window)) {
+    alert("Este navegador no soporta BarcodeDetector");
+    return;
+  }
+
+  const detector = new BarcodeDetector({
+    formats: ["ean_13", "code_39", "code_128"]
+  });
+
+  detector.detect(processedCanvas)
+    .then(detections => {
+      if (detections.length === 0) {
+        alert("No se pudo leer el codigo");
+        return;
+      }
+
+      const result = detections[0].rawValue;
+
+      cancelarBarcode();
+
+      const barcodeInput = document.getElementById("barcode");
+      barcodeInput.value = result;
+      barcodeInput.dispatchEvent(new Event("input"));
+    })
+    .catch(error => {
+      console.error("Error detectando codigo:", error);
+      alert("Ocurrio un error al leer el codigo");
+    });
+}
+
+// function capturarBarcode() {
+//   console.log("Click en capturar barcode")
+//   const bar = byId('bar')
+//   const canvas = byId('canvas1');
+//   const redline = byId("red-line")
+//   const input = byId('input');
+
+//   const quarter = bar.videoWidth / 4
   
-  canvas.width = 390;
-  canvas.height = 219;
-  const ctx = canvas.getContext('2d');
+//   canvas.width = 390;
+//   canvas.height = 219;
+//   const ctx = canvas.getContext('2d');
   
-  ctx.drawImage(bar, quarter, (bar.videoHeight/2)-100, quarter *2, 200,
-               0, 0, quarter*2, 200);
+//   ctx.drawImage(bar, quarter, (bar.videoHeight/2)-100, quarter *2, 200,
+//                0, 0, quarter*2, 200);
   
   
     
-  /*canvas.width = bar.videoWidth;
-  canvas.height = bar.videoHeight;
-  const ctx = canvas.getContext('2d');
+//   /*canvas.width = bar.videoWidth;
+//   canvas.height = bar.videoHeight;
+//   const ctx = canvas.getContext('2d');
   
-  ctx.drawImage(bar, 0, 0);*/
+//   ctx.drawImage(bar, 0, 0);*/
   
-  //input.src = canvas.toDataURL();
-  input.src = canvas.toBlob();
-  // Now, the onload event for the img will be fired
-}
+//   //input.src = canvas.toDataURL();
+//   input.src = canvas.toBlob();
+//   // Now, the onload event for the img will be fired
+// }
+
 
 function cancelarBarcode() {
   bar.srcObject.getTracks().forEach(track => track.stop());
