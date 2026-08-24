@@ -49,7 +49,8 @@ function onBarcode() {
         facingMode: {
             ideal: "environment"
         },
-      zoom: true,
+      width: { ideal: 390 },
+      height: { ideal: 219 }
     }
   }).then(stream => {
     const bar = document.getElementById('bar');
@@ -64,7 +65,10 @@ function onBarcode() {
     img.onload = function() {
       console.log("image loaded")
       if ('BarcodeDetector' in window) {
-        const detector = new BarcodeDetector({formats:["ean_13", "code_39", "code_128"]});
+        const detector = new BarcodeDetector(
+          {
+            formats:["ean_13", "code_39", "code_128", 
+              "ean_8", "upc_a", "upc_e", "codabar", "itf"]});
         detector.detect(input).then(detections => {
           if (detections.length == 0) {
             alert("No se pudo leer el codigo")
@@ -100,8 +104,8 @@ function capturarBarcode() {
 
   const quarter = bar.videoWidth / 4
   
-  canvas.width = quarter*2;
-  canvas.height = 200;//bar.videoHeight;
+  canvas.width = 390;
+  canvas.height = 219;
   const ctx = canvas.getContext('2d');
   
   ctx.drawImage(bar, quarter, (bar.videoHeight/2)-100, quarter *2, 200,
@@ -115,7 +119,8 @@ function capturarBarcode() {
   
   ctx.drawImage(bar, 0, 0);*/
   
-  input.src = canvas.toDataURL();
+  //input.src = canvas.toDataURL();
+  input.src = canvas.toBlob();
   // Now, the onload event for the img will be fired
 }
 
