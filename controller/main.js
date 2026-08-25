@@ -122,8 +122,8 @@ document.getElementById("count").addEventListener("keypress", function(event) {
 document.getElementById("scan").addEventListener("click", function() {
   hide(document.getElementById("page-1"))
   show(document.getElementById("page-2"))
-  //barcodeStartScanner()
-  onBarcode()
+  capturarBarcode()
+  //onBarcode()
 })
 
 /*
