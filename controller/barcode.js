@@ -28,7 +28,7 @@ function onBarcode() {
     redline.style.left = (bar.offsetWidth/4) + "px";
     redline.style.width = ((bar.offsetWidth/4) *2) + "px";
     
-    capturarBarcode()
+    //capturarBarcode()
   })
 }
 
@@ -100,10 +100,10 @@ function capturarBarcode() {
   const video = document.getElementById("bar");
   const canvas = document.getElementById("canvas1");
 
-  // if (!video.videoWidth || !video.videoHeight) {
-  //   alert("La camara aun no esta lista");
-  //   return;
-  // }
+   if (!video.videoWidth || !video.videoHeight) {
+    alert("La camara aun no esta lista");
+    return;
+  }
 
   const cropWidth = Math.floor(video.videoWidth / 2);
   const cropHeight = Math.min(240, video.videoHeight);
