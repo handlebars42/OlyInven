@@ -64,6 +64,9 @@ function onBarcode() {
     redline.style.left = (bar.offsetWidth/4) + "px";
     redline.style.width = ((bar.offsetWidth/4) *2) + "px";
     
+    capturarBarcode()
+    
+    return
     const img = byId("input")
     img.onload = function() {
       console.log("image loaded")
