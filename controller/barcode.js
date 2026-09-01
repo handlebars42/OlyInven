@@ -31,13 +31,7 @@ function onBarcode() {
     bar.addEventListener('play', () => {
       capturarBarcode()
     })
-    
-    /*const img = byId("input")
-    img.onload = function() {
-      console.log("image loaded")
-      capturarBarcode()
-    }*/
-  })
+ })
 }
 
 function stopBarcodeCamera() {
